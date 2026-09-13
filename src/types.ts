@@ -1,4 +1,4 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'COURIER' | 'CUSTOMER';
+export type UserRole = 'SUPER_ADMIN' | 'SELLER' | 'ADMIN' | 'COURIER' | 'CUSTOMER';
 
 export interface Address {
   id: string;
@@ -14,6 +14,37 @@ export interface Address {
   isDefault?: boolean;
 }
 
+export interface SellerStoreProfile {
+  storeName: string;          // Nama warung sendiri
+  storeTagline: string;       // Slogan warung
+  storeDescription?: string;  // Deskripsi warung
+  storeAddress: string;       // Alamat fisik warung
+  storePhone: string;         // WhatsApp warung
+  storeEmail?: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+  isOpen: boolean;
+  rating: number;
+  totalOrders: number;
+  // Pengaturan Pembayaran Warung Sendiri
+  paymentMethods: {
+    codEnabled: boolean;
+    bankTransferEnabled: boolean;
+    ewalletEnabled: boolean;
+  };
+  bankAccounts: BankConfig[];
+  ewallets: EWalletConfig[];
+  // Pengaturan Pengantaran Warung Sendiri
+  deliverySettings: {
+    baseFee: number;
+    feePerKm: number;
+    freeShippingMinOrder: number;
+    maxRadiusKm: number;
+    estimatedMinutesBase: number;
+    deliveryFleetName: string; // e.g. "Kurir Warung Sendiri"
+  };
+}
+
 export interface User {
   id: string;
   name: string;
@@ -25,6 +56,9 @@ export interface User {
   createdAt: string;
   totalSpent?: number;
   totalOrders?: number;
+  status?: 'ACTIVE' | 'RESTRICTED';
+  restrictedReason?: string;
+  storeProfile?: SellerStoreProfile;
 }
 
 export interface Category {
@@ -57,6 +91,8 @@ export interface Product {
   soldCount: number;
   brand?: string;
   sku?: string;
+  sellerId?: string;
+  sellerStoreName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -146,6 +182,9 @@ export interface Order {
   courierName?: string;
   courierPhone?: string;
   deliveryNotes?: string;
+  sellerId?: string;
+  sellerStoreName?: string;
+  adminFee?: number; // Potongan admin Super Admin (e.g. Rp 1.000)
   isScheduled?: boolean;
   scheduledDate?: string;
   scheduledTimeSlot?: string;
@@ -226,6 +265,20 @@ export interface SystemSettings {
   allowScheduledOrders: boolean;
   googleAppsScriptWebhookUrl?: string;
   googleSheetsSyncEnabled: boolean;
+  // Pengaturan & Keuntungan Super Admin
+  platformAdminFee: number; // Potongan biaya admin per pesanan (default: 1000)
+  superAdminAccount: {
+    holderName: string;
+    bankName: string;
+    accountNumber: string;
+    email: string;
+    phone: string;
+  };
+  superAdminEarnings: {
+    totalFeeAccumulated: number;
+    currentBalance: number;
+    totalWithdrawn: number;
+  };
 }
 
 export interface AuditLog {

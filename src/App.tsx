@@ -48,9 +48,15 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'REGISTER_BUYER' | 'REGISTER_SELLER' | 'LOGIN' | 'SWITCH_ADMIN'>('REGISTER_BUYER');
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleOpenAuth = (mode: 'REGISTER_BUYER' | 'REGISTER_SELLER' | 'LOGIN' | 'SWITCH_ADMIN' = 'REGISTER_BUYER') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
 
   // Subscribe to store updates
   useEffect(() => {
@@ -167,7 +173,7 @@ export default function App() {
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenCart={() => setActiveScreen('cart')}
         onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAuth={() => handleOpenAuth('REGISTER_BUYER')}
       />
 
       {/* Toast Alert */}
@@ -197,6 +203,7 @@ export default function App() {
             onSelectCategory={handleSelectCategoryFromHome}
             onOpenCart={() => setActiveScreen('cart')}
             onOpenVoucherModal={() => setShowVoucherModal(true)}
+            onOpenAuth={handleOpenAuth}
           />
         )}
 
@@ -385,13 +392,19 @@ export default function App() {
         </div>
       )}
 
-      {/* Shopee-style Customer Authentication & Role Switching Modal */}
+      {/* Shopee-style Customer & Seller Authentication Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        defaultMode={authModalMode}
         onSuccess={(loggedUser) => {
           setCurrentUser(loggedUser);
-          showToast(`Berhasil login sebagai ${loggedUser.name}`);
+          showToast(`Berhasil masuk sebagai ${loggedUser.name}`);
+          if (loggedUser.role === 'SELLER' || loggedUser.role === 'ADMIN' || loggedUser.role === 'SUPER_ADMIN') {
+            setActiveScreen('admin');
+          } else if (loggedUser.role === 'COURIER') {
+            setActiveScreen('courier');
+          }
         }}
       />
     </div>

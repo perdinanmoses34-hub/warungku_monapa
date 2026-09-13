@@ -241,6 +241,22 @@ export const ProfileScreen: React.FC<Props> = ({
       {/* TAB 3: BANTUAN & INFO TOKO */}
       {activeTab === 'INFO' && (
         <div className="space-y-3 text-xs">
+          {/* Seller registration card */}
+          {onOpenAuth && (
+            <div className="bg-teal-50 border border-teal-200 p-4 rounded-2xl flex items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-teal-900 text-xs">Punya Warung Sembako Sendiri?</p>
+                <p className="text-[11px] text-teal-700">Daftarkan warung Anda, atur produk, harga & kurir sendiri</p>
+              </div>
+              <button
+                onClick={onOpenAuth}
+                className="px-3.5 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl text-xs transition cursor-pointer shrink-0"
+              >
+                Buka Warung
+              </button>
+            </div>
+          )}
+
           {/* WhatsApp Direct Contact */}
           <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 flex items-center justify-between">
             <div className="flex items-center gap-3">

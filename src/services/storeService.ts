@@ -8,6 +8,7 @@ import {
   Product,
   PromoVoucher,
   Review,
+  SellerStoreProfile,
   StockMovement,
   SystemSettings,
   User,
@@ -78,6 +79,12 @@ class StoreService {
       this.cart = this.getItem(STORAGE_KEYS.CART, []);
       this.orders = this.getItem(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
       this.users = this.getItem(STORAGE_KEYS.USERS, INITIAL_USERS);
+      // Ensure seed sellers exist even if old users in storage lacked them
+      INITIAL_USERS.forEach((seedU) => {
+        if (!this.users.some((u) => u.id === seedU.id)) {
+          this.users.push(seedU);
+        }
+      });
       // Pastikan superadmin memakai akun perdinan.moses34@guru.smp.belajar.id
       const superAdminIndex = this.users.findIndex((u) => u.role === 'SUPER_ADMIN' || u.id === 'user-superadmin');
       if (superAdminIndex >= 0) {
@@ -85,11 +92,47 @@ class StoreService {
           ...this.users[superAdminIndex],
           name: 'Perdinan Moses (Super Admin)',
           email: 'perdinan.moses34@guru.smp.belajar.id',
+          status: 'ACTIVE',
         };
       }
+      // Ensure all users have a status
+      this.users = this.users.map((u) => ({
+        ...u,
+        status: u.status || 'ACTIVE',
+      }));
+
       this.currentUserId = this.getItem(STORAGE_KEYS.CURRENT_USER, 'user-customer');
       this.vouchers = this.getItem(STORAGE_KEYS.VOUCHERS, INITIAL_VOUCHERS);
       this.settings = this.getItem(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+
+      // Ensure platformAdminFee & superadmin account and earnings
+      if (this.settings.platformAdminFee === undefined) {
+        this.settings.platformAdminFee = 1000;
+      }
+      if (!this.settings.superAdminAccount) {
+        this.settings.superAdminAccount = INITIAL_SETTINGS.superAdminAccount;
+      }
+      if (!this.settings.superAdminEarnings) {
+        this.settings.superAdminEarnings = INITIAL_SETTINGS.superAdminEarnings || {
+          totalFeeAccumulated: 4000,
+          currentBalance: 4000,
+          totalWithdrawn: 0,
+        };
+      }
+
+      // Ensure products have sellerId and sellerStoreName
+      const sellers = this.users.filter((u) => (u.role === 'SELLER' || u.role === 'ADMIN') && u.storeProfile);
+      this.products = this.products.map((p, idx) => {
+        if (!p.sellerId && sellers.length > 0) {
+          const s = sellers[idx % sellers.length];
+          return {
+            ...p,
+            sellerId: s.id,
+            sellerStoreName: s.storeProfile?.storeName || s.name,
+          };
+        }
+        return p;
+      });
       this.reviews = this.getItem(STORAGE_KEYS.REVIEWS, [
         {
           id: 'rev-1',
@@ -247,6 +290,412 @@ class StoreService {
     return { success: true, user: newUser, message: 'Akun berhasil dibuat! Selamat berbelanja.' };
   }
 
+  /**
+   * Pendaftaran Mandiri untuk Penjual (Buka Warung)
+   */
+  public registerSeller(params: {
+    name: string;
+    phone: string;
+    email: string;
+    storeName: string;
+    storeTagline?: string;
+    storeAddress: string;
+    storePhone?: string;
+    bankName?: string;
+    accountNumber?: string;
+    accountHolder?: string;
+  }): { success: boolean; user?: User; message: string } {
+    const cleanPhone = params.phone.trim();
+    const cleanEmail = params.email.trim().toLowerCase();
+    const cleanStoreName = params.storeName.trim() || `Warung ${params.name.trim()}`;
+
+    // Check if phone or email already registered
+    const existing = this.users.find(
+      (u) => (cleanEmail && u.email.toLowerCase() === cleanEmail) || (cleanPhone && u.phone === cleanPhone)
+    );
+
+    if (existing) {
+      if (existing.role !== 'SELLER' && existing.role !== 'ADMIN') {
+        // Upgrade existing customer to seller
+        existing.role = 'SELLER';
+        existing.storeProfile = {
+          storeName: cleanStoreName,
+          storeTagline: params.storeTagline || 'Sembako Lengkap, Segar & Terpercaya',
+          storeDescription: `Warung sembako resmi milik ${params.name}. Menyediakan aneka bahan pokok harian.`,
+          storeAddress: params.storeAddress,
+          storePhone: params.storePhone || cleanPhone,
+          storeEmail: cleanEmail,
+          bannerUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80',
+          logoUrl: existing.avatarUrl,
+          isOpen: true,
+          rating: 5.0,
+          totalOrders: 0,
+          paymentMethods: {
+            codEnabled: true,
+            bankTransferEnabled: true,
+            ewalletEnabled: true,
+          },
+          bankAccounts: params.bankName && params.accountNumber ? [
+            {
+              id: `bank-${Date.now()}`,
+              bankName: params.bankName,
+              accountNumber: params.accountNumber,
+              accountHolder: params.accountHolder || params.name,
+            }
+          ] : [
+            {
+              id: `bank-${Date.now()}`,
+              bankName: 'BCA (Bank Central Asia)',
+              accountNumber: '7140001234',
+              accountHolder: params.name.toUpperCase(),
+            }
+          ],
+          ewallets: [
+            {
+              id: `ew-${Date.now()}`,
+              walletName: 'GoPay',
+              phoneNumber: cleanPhone,
+              accountHolder: params.name,
+            }
+          ],
+          deliverySettings: {
+            baseFee: 5000,
+            feePerKm: 2000,
+            freeShippingMinOrder: 50000,
+            maxRadiusKm: 10,
+            estimatedMinutesBase: 25,
+            deliveryFleetName: `Kurir ${cleanStoreName}`,
+          },
+        };
+        this.setItem(STORAGE_KEYS.USERS, this.users);
+        this.currentUserId = existing.id;
+        this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+        this.notify();
+        return { success: true, user: existing, message: `Akun Anda berhasil ditingkatkan menjadi Penjual (${cleanStoreName})!` };
+      }
+      this.currentUserId = existing.id;
+      this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+      this.notify();
+      return { success: true, user: existing, message: 'Akun toko Anda ditemukan! Berhasil masuk.' };
+    }
+
+    const newSeller: User = {
+      id: `user-seller-${Date.now()}`,
+      name: params.name.trim(),
+      phone: cleanPhone,
+      email: cleanEmail,
+      role: 'SELLER',
+      avatarUrl: `https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80`,
+      addresses: [
+        {
+          id: `addr-${Date.now()}`,
+          label: 'Rumah',
+          recipientName: params.name,
+          phone: cleanPhone,
+          street: params.storeAddress,
+          kelurahan: 'Sukamaju',
+          kecamatan: 'Cilodong',
+          city: 'Depok',
+          postalCode: '16415',
+          isDefault: true,
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      totalSpent: 0,
+      totalOrders: 0,
+      status: 'ACTIVE',
+      storeProfile: {
+        storeName: cleanStoreName,
+        storeTagline: params.storeTagline || 'Sembako Lengkap, Segar & Terpercaya',
+        storeDescription: `Warung sembako resmi milik ${params.name}. Menyediakan aneka bahan pokok harian langsung antar.`,
+        storeAddress: params.storeAddress,
+        storePhone: params.storePhone || cleanPhone,
+        storeEmail: cleanEmail,
+        bannerUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80',
+        logoUrl: `https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80`,
+        isOpen: true,
+        rating: 5.0,
+        totalOrders: 0,
+        paymentMethods: {
+          codEnabled: true,
+          bankTransferEnabled: true,
+          ewalletEnabled: true,
+        },
+        bankAccounts: params.bankName && params.accountNumber ? [
+          {
+            id: `bank-${Date.now()}`,
+            bankName: params.bankName,
+            accountNumber: params.accountNumber,
+            accountHolder: params.accountHolder || params.name,
+          }
+        ] : [
+          {
+            id: `bank-${Date.now()}`,
+            bankName: 'BCA (Bank Central Asia)',
+            accountNumber: '7140001234',
+            accountHolder: params.name.toUpperCase(),
+          }
+        ],
+        ewallets: [
+          {
+            id: `ew-${Date.now()}`,
+            walletName: 'GoPay',
+            phoneNumber: cleanPhone,
+            accountHolder: params.name,
+          }
+        ],
+        deliverySettings: {
+          baseFee: 5000,
+          feePerKm: 2000,
+          freeShippingMinOrder: 50000,
+          maxRadiusKm: 10,
+          estimatedMinutesBase: 25,
+          deliveryFleetName: `Kurir ${cleanStoreName}`,
+        },
+      },
+    };
+
+    this.users.unshift(newSeller);
+    this.setItem(STORAGE_KEYS.USERS, this.users);
+
+    this.currentUserId = newSeller.id;
+    this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+
+    this.addNotification({
+      userId: newSeller.id,
+      title: 'Selamat! Warung Anda Resmi Dibuka 🏪',
+      message: `Warung "${cleanStoreName}" berhasil didaftarkan. Anda dapat mulai menambahkan produk sembako, mengatur pembayaran, dan menerima pesanan!`,
+      type: 'SYSTEM',
+      read: false,
+    });
+
+    this.addNotification({
+      targetRole: 'SUPER_ADMIN',
+      title: 'Penjual Baru Bergabung!',
+      message: `${newSeller.name} baru saja membuka warung "${cleanStoreName}".`,
+      type: 'SYSTEM',
+      read: false,
+    });
+
+    this.logActivity('REGISTER_SELLER', 'Penjual', `Penjual baru terdaftar: ${cleanStoreName} oleh ${newSeller.name}`);
+    this.notify();
+
+    return { success: true, user: newSeller, message: `Selamat! Warung "${cleanStoreName}" Anda telah aktif.` };
+  }
+
+  /**
+   * Pendaftaran Mandiri untuk Pembeli
+   */
+  public registerBuyer(params: {
+    name: string;
+    phone: string;
+    email: string;
+    streetAddress?: string;
+  }): { success: boolean; user?: User; message: string } {
+    const res = this.registerUser({
+      name: params.name,
+      phone: params.phone,
+      email: params.email,
+      role: 'CUSTOMER',
+    });
+
+    if (res.success && res.user && params.streetAddress) {
+      this.saveAddress({
+        recipientName: params.name,
+        phone: params.phone,
+        street: params.streetAddress,
+        isDefault: true,
+        label: 'Rumah',
+      });
+    }
+
+    return res;
+  }
+
+  /**
+   * Update Profil Warung Milik Penjual
+   */
+  public updateSellerStoreProfile(sellerId: string, updates: Partial<SellerStoreProfile>): boolean {
+    const userIndex = this.users.findIndex((u) => u.id === sellerId);
+    if (userIndex < 0) return false;
+
+    const user = this.users[userIndex];
+    if (!user.storeProfile) {
+      user.storeProfile = {
+        storeName: user.name,
+        storeTagline: 'Sembako Lengkap & Murah',
+        storeAddress: user.addresses[0]?.street || 'Depok',
+        storePhone: user.phone,
+        isOpen: true,
+        rating: 5.0,
+        totalOrders: 0,
+        paymentMethods: { codEnabled: true, bankTransferEnabled: true, ewalletEnabled: true },
+        bankAccounts: [],
+        ewallets: [],
+        deliverySettings: {
+          baseFee: 5000,
+          feePerKm: 2000,
+          freeShippingMinOrder: 50000,
+          maxRadiusKm: 10,
+          estimatedMinutesBase: 25,
+          deliveryFleetName: `Kurir ${user.name}`,
+        },
+      };
+    }
+
+    user.storeProfile = {
+      ...user.storeProfile,
+      ...updates,
+    };
+
+    // If store name changed, update products under this seller
+    if (updates.storeName) {
+      this.products = this.products.map((p) => {
+        if (p.sellerId === sellerId) {
+          return { ...p, sellerStoreName: updates.storeName };
+        }
+        return p;
+      });
+      this.setItem(STORAGE_KEYS.PRODUCTS, this.products);
+    }
+
+    this.setItem(STORAGE_KEYS.USERS, this.users);
+    this.logActivity('UPDATE_STORE', 'Warung', `Penjual ${user.name} memperbarui profil toko ${user.storeProfile.storeName}`);
+    this.notify();
+    return true;
+  }
+
+  /**
+   * Dapatkan semua penjual terdaftar (role SELLER atau ADMIN) yang aktif
+   */
+  public getSellers(): User[] {
+    return this.users.filter(
+      (u) => (u.role === 'SELLER' || u.role === 'ADMIN') && u.status !== 'RESTRICTED'
+    );
+  }
+
+  // ===================== SUPER ADMIN CAPABILITIES =====================
+
+  /**
+   * Batasi Akun (Restrict User) oleh Super Admin
+   */
+  public restrictUser(userId: string, reason: string): boolean {
+    const target = this.users.find((u) => u.id === userId);
+    if (!target) return false;
+    if (target.role === 'SUPER_ADMIN') return false; // Super admin cannot be restricted
+
+    target.status = 'RESTRICTED';
+    target.restrictedReason = reason || 'Melanggar syarat dan ketentuan komunitas WARUNGKU';
+
+    this.setItem(STORAGE_KEYS.USERS, this.users);
+
+    this.addNotification({
+      userId: target.id,
+      title: '⚠️ Akun Anda Telah Dibatasi oleh Super Admin',
+      message: `Akun Anda dibatasi dengan alasan: "${target.restrictedReason}". Hubungi Super Admin untuk peninjauan kembali.`,
+      type: 'SYSTEM',
+      read: false,
+    });
+
+    this.logActivity('RESTRICT_USER', 'Super Admin', `Super Admin membatasi akun ${target.name} (${target.email || target.phone}): ${target.restrictedReason}`);
+    this.notify();
+    return true;
+  }
+
+  /**
+   * Buka Batasan Akun (Unrestrict User) oleh Super Admin
+   */
+  public unrestrictUser(userId: string): boolean {
+    const target = this.users.find((u) => u.id === userId);
+    if (!target) return false;
+
+    target.status = 'ACTIVE';
+    delete target.restrictedReason;
+
+    this.setItem(STORAGE_KEYS.USERS, this.users);
+
+    this.addNotification({
+      userId: target.id,
+      title: '✅ Pembatasan Akun Telah Dicabut',
+      message: 'Akun Anda telah diaktifkan kembali oleh Super Admin. Selamat beraktivitas!',
+      type: 'SYSTEM',
+      read: false,
+    });
+
+    this.logActivity('UNRESTRICT_USER', 'Super Admin', `Super Admin membuka batasan akun ${target.name}`);
+    this.notify();
+    return true;
+  }
+
+  /**
+   * Hapus Akun oleh Super Admin
+   */
+  public deleteUser(userId: string): boolean {
+    const target = this.users.find((u) => u.id === userId);
+    if (!target) return false;
+    if (target.role === 'SUPER_ADMIN') return false; // Cannot delete super admin
+
+    this.users = this.users.filter((u) => u.id !== userId);
+    this.setItem(STORAGE_KEYS.USERS, this.users);
+
+    // If current user is deleted, switch to fallback customer
+    if (this.currentUserId === userId) {
+      const fallback = this.users.find((u) => u.role === 'CUSTOMER') || this.users[0];
+      if (fallback) this.currentUserId = fallback.id;
+      this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+    }
+
+    this.logActivity('DELETE_USER', 'Super Admin', `Super Admin menghapus akun ${target.name} (${target.role})`);
+    this.notify();
+    return true;
+  }
+
+  /**
+   * Tarik Saldo Keuntungan Super Admin
+   */
+  public withdrawSuperAdminEarnings(amount: number, note?: string): boolean {
+    if (!this.settings.superAdminEarnings) return false;
+    if (amount <= 0 || amount > this.settings.superAdminEarnings.currentBalance) return false;
+
+    this.settings.superAdminEarnings.currentBalance -= amount;
+    this.settings.superAdminEarnings.totalWithdrawn += amount;
+    this.setItem(STORAGE_KEYS.SETTINGS, this.settings);
+
+    this.addNotification({
+      targetRole: 'SUPER_ADMIN',
+      title: '💸 Penarikan Saldo Keuntungan Berhasil',
+      message: `Dana Rp ${amount.toLocaleString('id-ID')} telah diproses ke rekening ${this.settings.superAdminAccount.bankName} (${this.settings.superAdminAccount.accountNumber}). ${note ? `Catatan: ${note}` : ''}`,
+      type: 'SYSTEM',
+      read: false,
+    });
+
+    this.logActivity('WITHDRAW_SUPERADMIN', 'Super Admin', `Super Admin menarik keuntungan potongan admin Rp ${amount.toLocaleString('id-ID')}`);
+    this.notify();
+    return true;
+  }
+
+  /**
+   * Ubah Nominal Potongan Admin Per Transaksi
+   */
+  public updatePlatformAdminFee(fee: number): void {
+    this.settings.platformAdminFee = Math.max(0, fee);
+    this.setItem(STORAGE_KEYS.SETTINGS, this.settings);
+    this.logActivity('UPDATE_ADMIN_FEE', 'Super Admin', `Super Admin mengubah biaya admin platform menjadi Rp ${fee.toLocaleString('id-ID')}`);
+    this.notify();
+  }
+
+  /**
+   * Update Rekening Bank Penerima Super Admin
+   */
+  public updateSuperAdminAccount(account: Partial<SystemSettings['superAdminAccount']>): void {
+    this.settings.superAdminAccount = {
+      ...this.settings.superAdminAccount,
+      ...account,
+    };
+    this.setItem(STORAGE_KEYS.SETTINGS, this.settings);
+    this.notify();
+  }
+
   public loginUser(credential: string): { success: boolean; user?: User; message: string } {
     const clean = credential.trim().toLowerCase();
     const found = this.users.find(
@@ -327,18 +776,49 @@ class StoreService {
     return [...this.products];
   }
 
+  public getProductsBySeller(sellerId: string): Product[] {
+    return this.products.filter((p) => p.sellerId === sellerId);
+  }
+
   public getProductById(id: string): Product | undefined {
     return this.products.find((p) => p.id === id);
   }
 
   public saveProduct(productData: Partial<Product>): Product {
+    const currentUser = this.getCurrentUser();
+    
+    // Determine sellerId
+    let sellerId = productData.sellerId;
+    let sellerStoreName = productData.sellerStoreName;
+    if (!sellerId) {
+      if (currentUser.role === 'SELLER' || currentUser.role === 'ADMIN') {
+        sellerId = currentUser.id;
+        sellerStoreName = currentUser.storeProfile?.storeName || currentUser.name;
+      } else {
+        sellerId = 'user-seller-1';
+        sellerStoreName = 'Warung Monapa Sejahtera';
+      }
+    }
+
+    // Check if seller is restricted
+    const seller = this.users.find((u) => u.id === sellerId);
+    if (seller && seller.status === 'RESTRICTED') {
+      throw new Error(`Akun warung "${sellerStoreName || seller.name}" sedang dibatasi oleh Super Admin (${seller.restrictedReason || 'Pelanggaran ketentuan'}). Tidak dapat mengelola produk.`);
+    }
+
     let saved: Product;
     const now = new Date().toISOString();
 
     if (productData.id && this.products.some((p) => p.id === productData.id)) {
       this.products = this.products.map((p) => {
         if (p.id === productData.id) {
-          saved = { ...p, ...productData, updatedAt: now };
+          saved = {
+            ...p,
+            ...productData,
+            sellerId: p.sellerId || sellerId,
+            sellerStoreName: p.sellerStoreName || sellerStoreName,
+            updatedAt: now,
+          };
           return saved;
         }
         return p;
@@ -348,6 +828,8 @@ class StoreService {
       saved = {
         id: `prod-${Date.now()}`,
         name: productData.name || 'Produk Baru',
+        sellerId,
+        sellerStoreName,
         categoryId: productData.categoryId || 'cat-1',
         categoryName: productData.categoryName || 'Beras',
         description: productData.description || '',
@@ -372,7 +854,7 @@ class StoreService {
         updatedAt: now,
       };
       this.products.unshift(saved);
-      this.logActivity('ADD_PRODUCT', 'Produk', `Menambahkan produk baru: ${saved.name}`);
+      this.logActivity('ADD_PRODUCT', 'Produk', `Menambahkan produk baru: ${saved.name} untuk toko ${saved.sellerStoreName}`);
     }
 
     this.setItem(STORAGE_KEYS.PRODUCTS, this.products);
@@ -504,20 +986,47 @@ class StoreService {
     return [...this.orders];
   }
 
+  public getOrdersBySeller(sellerId: string): Order[] {
+    return this.orders.filter((o) => o.sellerId === sellerId);
+  }
+
   public getOrderById(id: string): Order | undefined {
     return this.orders.find((o) => o.id === id || o.orderNumber === id);
   }
 
   public createOrder(orderPayload: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'updatedAt' | 'statusHistory'>): Order {
+    // Check if buyer is restricted
+    const buyer = this.users.find((u) => u.id === orderPayload.userId);
+    if (buyer && buyer.status === 'RESTRICTED') {
+      throw new Error(`Akun Anda telah dibatasi oleh Super Admin: "${buyer.restrictedReason || 'Pelanggaran ketentuan platform'}". Anda tidak dapat membuat pesanan.`);
+    }
+
     const now = new Date().toISOString();
     const count = this.orders.length + 1;
     const pad = String(count).padStart(6, '0');
     const orderNumber = `WK-2026-${pad}`;
 
+    // Resolve sellerId & sellerStoreName
+    let sellerId = orderPayload.sellerId;
+    let sellerStoreName = orderPayload.sellerStoreName;
+    if (!sellerId && orderPayload.items.length > 0) {
+      const firstItemProd = this.getProductById(orderPayload.items[0].productId);
+      if (firstItemProd?.sellerId) {
+        sellerId = firstItemProd.sellerId;
+        sellerStoreName = firstItemProd.sellerStoreName;
+      }
+    }
+
+    // Platform admin fee (deducted/allocated to superadmin)
+    const adminFee = orderPayload.adminFee ?? (this.settings.platformAdminFee || 1000);
+
     const newOrder: Order = {
       ...orderPayload,
       id: `ord-${Date.now()}`,
       orderNumber,
+      sellerId,
+      sellerStoreName,
+      adminFee,
       createdAt: now,
       updatedAt: now,
       statusHistory: [
@@ -528,6 +1037,18 @@ class StoreService {
         },
       ],
     };
+
+    // Credit platform fee to Super Admin earnings
+    if (!this.settings.superAdminEarnings) {
+      this.settings.superAdminEarnings = {
+        totalFeeAccumulated: 0,
+        currentBalance: 0,
+        totalWithdrawn: 0,
+      };
+    }
+    this.settings.superAdminEarnings.totalFeeAccumulated += adminFee;
+    this.settings.superAdminEarnings.currentBalance += adminFee;
+    this.setItem(STORAGE_KEYS.SETTINGS, this.settings);
 
     // Deduct stock for all items
     orderPayload.items.forEach((item) => {
@@ -546,23 +1067,35 @@ class StoreService {
     this.addNotification({
       userId: newOrder.userId,
       title: 'Pesanan Berhasil Dibuat!',
-      message: `Pesanan ${newOrder.orderNumber} dengan total ${newOrder.grandTotal} telah diterima warung.`,
+      message: `Pesanan ${newOrder.orderNumber} dengan total Rp ${newOrder.grandTotal.toLocaleString('id-ID')} telah diterima. Biaya admin platform: Rp ${adminFee.toLocaleString('id-ID')}.`,
       type: 'ORDER',
       orderId: newOrder.id,
       read: false,
     });
 
-    // Send admin notification
+    // Send seller notification
+    if (sellerId) {
+      this.addNotification({
+        userId: sellerId,
+        title: '🔔 Pesanan Baru Masuk!',
+        message: `Toko "${sellerStoreName || 'Warung'}" menerima pesanan baru ${newOrder.orderNumber} dari ${newOrder.customerName}.`,
+        type: 'ORDER',
+        orderId: newOrder.id,
+        read: false,
+      });
+    }
+
+    // Send Super Admin notification
     this.addNotification({
-      targetRole: 'ADMIN',
-      title: '🔔 Pesanan Baru Masuk!',
-      message: `Pesanan ${newOrder.orderNumber} baru saja dibuat oleh ${newOrder.customerName}.`,
-      type: 'ORDER',
+      targetRole: 'SUPER_ADMIN',
+      title: `💰 Keuntungan Admin Masuk (+Rp ${adminFee.toLocaleString('id-ID')})`,
+      message: `Potongan pembayaran admin Rp ${adminFee.toLocaleString('id-ID')} dari transaksi ${newOrder.orderNumber} berhasil dicatat ke saldo Super Admin.`,
+      type: 'SYSTEM',
       orderId: newOrder.id,
       read: false,
     });
 
-    this.logActivity('CREATE_ORDER', 'Pesanan', `Pelanggan membuat pesanan baru ${newOrder.orderNumber}`);
+    this.logActivity('CREATE_ORDER', 'Pesanan', `Pelanggan membuat pesanan baru ${newOrder.orderNumber}. Super Admin mendapat komisi Rp ${adminFee.toLocaleString('id-ID')}.`);
 
     this.notify();
     return newOrder;

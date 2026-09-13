@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Category, Product, SystemSettings } from '../../types';
 import { formatRupiah } from '../../utils/formatters';
 import { ProductCard } from './ProductCard';
+import { store } from '../../services/storeService';
 import {
   Search,
   Sparkles,
@@ -14,6 +15,12 @@ import {
   ShoppingCart,
   ChevronRight,
   Percent,
+  Store,
+  MapPin,
+  CheckCircle2,
+  UserPlus,
+  Filter,
+  X,
 } from 'lucide-react';
 
 interface Props {
@@ -32,6 +39,7 @@ interface Props {
   onSelectCategory: (categoryId: string) => void;
   onOpenCart: () => void;
   onOpenVoucherModal: () => void;
+  onOpenAuth?: (mode?: 'REGISTER_BUYER' | 'REGISTER_SELLER' | 'LOGIN' | 'SWITCH_ADMIN') => void;
 }
 
 export const HomeScreen: React.FC<Props> = ({
@@ -50,19 +58,32 @@ export const HomeScreen: React.FC<Props> = ({
   onSelectCategory,
   onOpenCart,
   onOpenVoucherModal,
+  onOpenAuth,
 }) => {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
+  const [activeSellerFilter, setActiveSellerFilter] = useState<string>('ALL');
+
+  const sellers = store.getSellers();
+  const selectedSeller = sellers.find((s) => s.id === activeSellerFilter);
 
   // Flash sale / promo products
-  const promoProducts = products.filter((p) => p.promoPrice && p.promoPrice < p.normalPrice);
+  const promoProducts = products.filter((p) => {
+    const isPromo = p.promoPrice && p.promoPrice < p.normalPrice;
+    if (activeSellerFilter === 'ALL') return isPromo;
+    return isPromo && p.sellerId === activeSellerFilter;
+  });
 
   // Best selling products
-  const popularProducts = [...products].sort((a, b) => b.soldCount - a.soldCount).slice(0, 6);
+  const popularProducts = [...products]
+    .filter((p) => (activeSellerFilter === 'ALL' ? true : p.sellerId === activeSellerFilter))
+    .sort((a, b) => b.soldCount - a.soldCount)
+    .slice(0, 6);
 
   // Filtered product section
   const catalogProducts = products.filter((p) => {
-    if (activeCategoryFilter === 'ALL') return true;
-    return p.categoryId === activeCategoryFilter;
+    const matchesCategory = activeCategoryFilter === 'ALL' || p.categoryId === activeCategoryFilter;
+    const matchesSeller = activeSellerFilter === 'ALL' || p.sellerId === activeSellerFilter;
+    return matchesCategory && matchesSeller;
   });
 
   return (
@@ -76,8 +97,12 @@ export const HomeScreen: React.FC<Props> = ({
           <Search className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm font-bold text-stone-800 leading-snug">Mau belanja sembako apa hari ini?</p>
-          <p className="text-[11px] text-stone-400 truncate">Cari beras, minyak goreng, telur, gula, bumbu dapur...</p>
+          <p className="text-xs sm:text-sm font-bold text-stone-800 leading-snug">
+            Mau belanja sembako apa hari ini?
+          </p>
+          <p className="text-[11px] text-stone-400 truncate">
+            Cari beras, minyak goreng, telur, gula, bumbu dapur dari semua warung...
+          </p>
         </div>
         <span className="px-3 py-1 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-2xs shrink-0">
           Cari
@@ -157,10 +182,139 @@ export const HomeScreen: React.FC<Props> = ({
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
           <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
           <div className="text-center sm:text-left min-w-0">
-            <p className="text-[11px] sm:text-xs font-bold text-stone-800 leading-tight">Harga Ramah</p>
-            <p className="text-[10px] text-stone-400 hidden sm:block">Pas di Kantong</p>
+            <p className="text-[11px] sm:text-xs font-bold text-stone-800 leading-tight">Banyak Warung</p>
+            <p className="text-[10px] text-stone-400 hidden sm:block">Pilihan Lengkap</p>
           </div>
         </div>
+      </div>
+
+      {/* WARUNG SEMBAKO TERDAFTAR (Multi-Seller Section for Buyers) */}
+      <div>
+        <div className="flex items-center justify-between mb-2.5">
+          <div>
+            <h2 className="text-sm sm:text-base font-black text-stone-900 tracking-tight flex items-center gap-1.5">
+              <Store className="w-4 h-4 text-teal-700" />
+              <span>Daftar Warung Sembako Terdaftar</span>
+            </h2>
+            <p className="text-[11px] text-stone-500">
+              Pilih warung favorit Anda untuk melihat sembako yang mereka jual
+            </p>
+          </div>
+          {onOpenAuth && (
+            <button
+              onClick={() => onOpenAuth('REGISTER_SELLER')}
+              className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 cursor-pointer bg-teal-50 px-2.5 py-1 rounded-xl border border-teal-200"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Buka Warung Anda</span>
+            </button>
+          )}
+        </div>
+
+        {/* Warungs list carousel / cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+          {/* Card: Semua Warung (Reset Filter) */}
+          <div
+            onClick={() => setActiveSellerFilter('ALL')}
+            className={`p-3 rounded-2xl border transition cursor-pointer flex items-center gap-3 ${
+              activeSellerFilter === 'ALL'
+                ? 'bg-teal-700 text-white border-teal-800 shadow-xs'
+                : 'bg-white hover:bg-stone-50 border-stone-200/90 text-stone-800'
+            }`}
+          >
+            <div
+              className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                activeSellerFilter === 'ALL' ? 'bg-white/20 text-white' : 'bg-teal-50 text-teal-800'
+              }`}
+            >
+              🏪
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-extrabold text-xs sm:text-sm truncate">Semua Warung</div>
+              <div
+                className={`text-[10px] truncate ${
+                  activeSellerFilter === 'ALL' ? 'text-teal-100' : 'text-stone-400'
+                }`}
+              >
+                Tampilkan seluruh sembako dari semua penjual
+              </div>
+            </div>
+            {activeSellerFilter === 'ALL' && (
+              <CheckCircle2 className="w-4 h-4 text-teal-200 shrink-0" />
+            )}
+          </div>
+
+          {/* Seller cards */}
+          {sellers.map((seller) => {
+            const isSelected = activeSellerFilter === seller.id;
+            const sellerProductCount = products.filter((p) => p.sellerId === seller.id).length;
+            const storeName = seller.storeProfile?.storeName || seller.name;
+            const storeAddress = seller.storeProfile?.storeAddress || 'Monapa, Depok';
+
+            return (
+              <div
+                key={seller.id}
+                onClick={() => setActiveSellerFilter(seller.id)}
+                className={`p-3 rounded-2xl border transition cursor-pointer flex items-center gap-3 relative ${
+                  isSelected
+                    ? 'bg-teal-700 text-white border-teal-800 shadow-xs'
+                    : 'bg-white hover:bg-teal-50/40 border-stone-200/90 text-stone-800'
+                }`}
+              >
+                <div
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-900'
+                  }`}
+                >
+                  <Store className="w-5 h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-xs sm:text-sm truncate">{storeName}</span>
+                    <span
+                      className={`text-[9px] px-1.5 py-0.2 rounded-md font-bold uppercase shrink-0 ${
+                        isSelected ? 'bg-teal-800 text-teal-200' : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      Buka
+                    </span>
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 text-[10px] truncate ${
+                      isSelected ? 'text-teal-100' : 'text-stone-500'
+                    }`}
+                  >
+                    <MapPin className="w-3 h-3 shrink-0 opacity-70" />
+                    <span className="truncate">{storeAddress}</span>
+                    <span>• {sellerProductCount} Produk</span>
+                  </div>
+                </div>
+                {isSelected && <CheckCircle2 className="w-4 h-4 text-teal-200 shrink-0" />}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Active Warung Filter Alert Bar */}
+        {activeSellerFilter !== 'ALL' && selectedSeller && (
+          <div className="mt-2.5 p-2.5 bg-teal-50 border border-teal-200 rounded-xl flex items-center justify-between text-xs text-teal-900 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <Store className="w-4 h-4 text-teal-700 shrink-0" />
+              <span>
+                Menampilkan produk dari:{' '}
+                <strong>{selectedSeller.storeProfile?.storeName || selectedSeller.name}</strong> (
+                {catalogProducts.length} Produk)
+              </span>
+            </div>
+            <button
+              onClick={() => setActiveSellerFilter('ALL')}
+              className="flex items-center gap-1 text-[11px] font-bold text-teal-800 bg-white px-2 py-0.5 rounded-lg border border-teal-200 hover:bg-teal-100 cursor-pointer"
+            >
+              <X className="w-3 h-3" />
+              <span>Tampilkan Semua</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Categories Horizontal Grid */}
@@ -198,7 +352,7 @@ export const HomeScreen: React.FC<Props> = ({
                 {cat.name.includes('Deterjen') && '🧺'}
                 {cat.name.includes('Gas') && '🔥'}
               </div>
-              <span className="text-[11px] font-bold text-stone-700 group-hover:text-emerald-900 line-clamp-1 leading-tight">
+              <span className="text-[11px] font-bold text-stone-700 group-hover:text-emerald-800 line-clamp-1 leading-tight">
                 {cat.name}
               </span>
             </div>
@@ -206,28 +360,23 @@ export const HomeScreen: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Flash Sale / Promo Hemat Section */}
+      {/* Flash Sale / Promo Hari Ini */}
       {promoProducts.length > 0 && (
-        <div className="bg-rose-50/60 p-3.5 sm:p-5 rounded-3xl border border-rose-100">
-          <div className="flex items-center justify-between mb-3.5">
+        <div>
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-rose-500 text-white rounded-xl">
-                <Flame className="w-4 h-4" />
-              </span>
-              <div>
-                <h2 className="text-sm sm:text-base font-black text-rose-900 leading-tight">
-                  Promo Hemat Hari Ini
-                </h2>
-                <p className="text-[11px] text-rose-700">Harga spesial sembako pilihan untuk keluarga hemat</p>
+              <div className="flex items-center gap-1.5 text-rose-600 font-black text-sm sm:text-base">
+                <Flame className="w-5 h-5 fill-rose-600 animate-pulse" />
+                <span>Promo Kilat Hari Ini</span>
               </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200 animate-bounce">
+                HEMAT HINGGA 20%
+              </span>
             </div>
-            <span className="text-xs font-bold text-rose-600 bg-white px-2.5 py-1 rounded-full border border-rose-200">
-              Diskon s/d 15%
-            </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {promoProducts.slice(0, 6).map((product) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            {promoProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -278,7 +427,11 @@ export const HomeScreen: React.FC<Props> = ({
             <h2 className="text-sm sm:text-base font-black text-stone-900 leading-tight">
               Katalog Lengkap Warung
             </h2>
-            <p className="text-[11px] text-stone-500">Pilih kebutuhan dapur harian Anda</p>
+            <p className="text-[11px] text-stone-500">
+              {activeSellerFilter !== 'ALL' && selectedSeller
+                ? `Menampilkan barang dari ${selectedSeller.storeProfile?.storeName || selectedSeller.name}`
+                : 'Pilih kebutuhan dapur harian Anda dari semua warung'}
+            </p>
           </div>
 
           {/* Category Filter Pills */}
@@ -291,7 +444,7 @@ export const HomeScreen: React.FC<Props> = ({
                   : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-100'
               }`}
             >
-              Semua ({products.length})
+              Semua Kategori ({products.length})
             </button>
             {categories.slice(0, 6).map((cat) => (
               <button
@@ -309,21 +462,65 @@ export const HomeScreen: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-          {catalogProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              cartQuantity={cartMap[product.id] || 0}
-              onOpenDetail={onOpenProductDetail}
-              onAddToCart={onAddToCart}
-              onUpdateCartQty={onUpdateCartQty}
-              isWishlisted={wishlistSet.has(product.id)}
-              onToggleWishlist={onToggleWishlist}
-            />
-          ))}
-        </div>
+        {catalogProducts.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-stone-200 p-6">
+            <Store className="w-10 h-10 text-stone-300 mx-auto mb-2" />
+            <p className="font-bold text-sm text-stone-700">Belum ada produk untuk filter ini</p>
+            <p className="text-xs text-stone-400 mt-1">
+              Coba ganti kategori atau pilih warung lain.
+            </p>
+            <button
+              onClick={() => {
+                setActiveCategoryFilter('ALL');
+                setActiveSellerFilter('ALL');
+              }}
+              className="mt-3 px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-xl cursor-pointer"
+            >
+              Reset Filter
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            {catalogProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                cartQuantity={cartMap[product.id] || 0}
+                onOpenDetail={onOpenProductDetail}
+                onAddToCart={onAddToCart}
+                onUpdateCartQty={onUpdateCartQty}
+                isWishlisted={wishlistSet.has(product.id)}
+                onToggleWishlist={onToggleWishlist}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Banner Ajakan Buka Warung Sendiri */}
+      {onOpenAuth && (
+        <div className="rounded-3xl bg-gradient-to-r from-teal-900 via-teal-800 to-emerald-900 text-white p-5 sm:p-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1.5 text-center sm:text-left">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-800/80 text-teal-200 text-[10px] font-bold uppercase tracking-wider">
+              <Store className="w-3.5 h-3.5" />
+              <span>Gabung Jadi Penjual</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-black tracking-tight">
+              Punya Warung Sembako di Lingkungan Anda?
+            </h3>
+            <p className="text-xs text-teal-100 max-w-xl">
+              Daftar akun penjual sekarang. Atur nama warung Anda, kelola stok & harga sembako, terima pembayaran, dan atur kurir pengantaran langsung ke tetangga dan warga sekitar.
+            </p>
+          </div>
+          <button
+            onClick={() => onOpenAuth('REGISTER_SELLER')}
+            className="px-5 py-3 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs rounded-2xl shadow-lg transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Buka Warung Sekarang</span>
+          </button>
+        </div>
+      )}
 
       {/* Sticky Bottom Cart Checkout Bar (Android UX requirement) */}
       {cartCount > 0 && (
@@ -340,7 +537,9 @@ export const HomeScreen: React.FC<Props> = ({
               </span>
             </div>
             <div>
-              <p className="text-xs text-emerald-200 font-semibold">{cartCount} Barang di Keranjang</p>
+              <p className="text-xs text-emerald-200 font-semibold">
+                {cartCount} Barang di Keranjang
+              </p>
               <p className="text-sm font-black text-white">{formatRupiah(cartTotal)}</p>
             </div>
           </div>

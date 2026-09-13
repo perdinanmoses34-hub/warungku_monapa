@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Grid, ShoppingBag, ShoppingCart, User, Truck, Shield } from 'lucide-react';
+import { Home, Grid, ShoppingBag, ShoppingCart, User, Truck, Shield, Store } from 'lucide-react';
 import { UserRole } from '../../types';
 
 interface Props {
@@ -91,6 +91,16 @@ export const BottomNav: React.FC<Props> = ({
           >
             <Truck className={`w-5 h-5 ${activeTab === 'courier' ? 'stroke-[2.5]' : 'stroke-2'}`} />
             <span className="text-[10px] mt-0.5">Kurir</span>
+          </button>
+        ) : userRole === 'SELLER' ? (
+          <button
+            onClick={() => onSelectTab('admin')}
+            className={`flex flex-col items-center justify-center w-14 py-1 rounded-xl transition cursor-pointer ${
+              activeTab === 'admin' ? 'text-teal-700 font-bold' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <Store className={`w-5 h-5 ${activeTab === 'admin' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="text-[10px] mt-0.5">Warung</span>
           </button>
         ) : userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' ? (
           <button

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Product } from '../../types';
 import { formatRupiah, formatWeight } from '../../utils/formatters';
-import { ShoppingCart, Plus, Minus, Star, Heart } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Star, Heart, Store } from 'lucide-react';
 import { store } from '../../services/storeService';
 
 interface Props {
@@ -95,6 +95,13 @@ export const ProductCard: React.FC<Props> = ({
             </span>
             <span>{formatWeight(product.weightGrams)}</span>
           </div>
+
+          {product.sellerStoreName && (
+            <div className="flex items-center gap-1 text-[10px] text-teal-700 font-semibold mb-1 truncate">
+              <Store className="w-3 h-3 text-teal-600 shrink-0" />
+              <span className="truncate">{product.sellerStoreName}</span>
+            </div>
+          )}
 
           <h3
             onClick={() => onOpenDetail(product)}

@@ -58,6 +58,8 @@ export const Header: React.FC<Props> = ({
     switch (role) {
       case 'SUPER_ADMIN':
         return { label: 'Super Admin', bg: 'bg-purple-100 text-purple-800 border-purple-200' };
+      case 'SELLER':
+        return { label: currentUser.storeProfile?.storeName || 'Penjual (Warung)', bg: 'bg-teal-100 text-teal-800 border-teal-200' };
       case 'ADMIN':
         return { label: 'Admin Warung', bg: 'bg-blue-100 text-blue-800 border-blue-200' };
       case 'COURIER':
@@ -110,6 +112,19 @@ export const Header: React.FC<Props> = ({
                 <div className="min-w-0">
                   <div className="font-bold">Pelanggan (Customer)</div>
                   <div className="text-[10px] font-normal text-stone-400 truncate">Belanja sembako & checkout</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleSwitchRole('SELLER')}
+                className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center gap-2 transition cursor-pointer ${
+                  currentUser.role === 'SELLER' ? 'bg-teal-50 text-teal-700 font-bold' : 'hover:bg-stone-50'
+                }`}
+              >
+                <Store className="w-4 h-4 text-teal-600 shrink-0" />
+                <div className="min-w-0">
+                  <div className="font-bold">Penjual (Warung Sendiri)</div>
+                  <div className="text-[10px] font-normal text-stone-400 truncate">Atur nama warung, produk & ongkir</div>
                 </div>
               </button>
 
@@ -222,6 +237,18 @@ export const Header: React.FC<Props> = ({
             )}
           </button>
 
+          {/* Buka Warung shortcut for visitors/customers */}
+          {currentUser.role === 'CUSTOMER' && onOpenAuth && (
+            <button
+              onClick={onOpenAuth}
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-xl transition text-xs font-bold border border-teal-200 cursor-pointer"
+              title="Buka Warung Sendiri"
+            >
+              <Store className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+              <span>Buka Warung</span>
+            </button>
+          )}
+
           {/* User Account / Auth Button */}
           {onOpenAuth && (
             <button
@@ -233,6 +260,18 @@ export const Header: React.FC<Props> = ({
               <span className="hidden sm:inline font-semibold">
                 {currentUser.role === 'CUSTOMER' ? currentUser.name.split(' ')[0] : 'Akun'}
               </span>
+            </button>
+          )}
+
+          {/* Seller Warung Saya shortcut */}
+          {currentUser.role === 'SELLER' && (
+            <button
+              onClick={() => onNavigate(activeScreen === 'admin' ? 'home' : 'admin')}
+              className="px-2.5 sm:px-3 py-1.5 bg-teal-800 hover:bg-teal-900 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer shrink-0"
+              title={activeScreen === 'admin' ? 'Tampilan Belanja' : 'Kelola Warung Saya'}
+            >
+              <Store className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+              <span>{activeScreen === 'admin' ? 'Belanja' : 'Warung Saya'}</span>
             </button>
           )}
 
