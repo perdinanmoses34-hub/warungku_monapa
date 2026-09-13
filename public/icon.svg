@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="warungGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16a34a" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+    <linearGradient id="roofGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#052e16" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#warungGrad)" />
+  
+  <!-- Subtle circular halo -->
+  <circle cx="256" cy="256" r="190" fill="#ffffff" opacity="0.08" />
+  
+  <!-- Warung / Grocery Store Icon Art -->
+  <g filter="url(#shadow)">
+    <!-- Awning / Warung Canopy -->
+    <path d="M 120 180 L 392 180 L 416 230 C 416 242 406 252 392 252 C 378 252 368 242 368 230 L 352 230 C 352 242 342 252 328 252 C 314 252 304 242 304 230 L 288 230 C 288 242 278 252 264 252 C 250 252 240 242 240 230 L 224 230 C 224 242 214 252 200 252 C 186 252 176 242 176 230 L 160 230 C 160 242 150 252 136 252 C 122 252 112 242 112 230 Z" fill="#f8fafc" />
+    
+    <!-- Red stripes on canopy -->
+    <path d="M 160 180 L 176 230 C 176 242 186 252 200 252 C 214 252 224 242 224 230 L 208 180 Z" fill="#ef4444" />
+    <path d="M 272 180 L 288 230 C 288 242 298 252 312 252 C 326 252 336 242 336 230 L 320 180 Z" fill="#ef4444" />
+    <path d="M 384 180 L 400 230 C 400 242 406 250 416 230 L 392 180 Z" fill="#ef4444" />
+    <path d="M 120 180 L 112 230 C 112 242 122 252 136 252 C 150 252 160 242 160 230 L 144 180 Z" fill="#ef4444" />
+
+    <!-- Warung Shop Building Body -->
+    <rect x="136" y="246" width="240" height="150" rx="16" fill="#f8fafc" />
+    
+    <!-- Grocery Cart Basket Accent in Centre -->
+    <circle cx="256" cy="300" r="32" fill="#dcfce7" />
+    
+    <!-- Shopping Bag / Goods outline inside -->
+    <path d="M 244 290 L 268 290 L 272 314 L 240 314 Z" fill="#16a34a" />
+    <path d="M 250 290 C 250 282 262 282 262 290" stroke="#16a34a" stroke-width="3" fill="none" stroke-linecap="round" />
+    
+    <!-- Doorway / Counter -->
+    <path d="M 232 350 L 280 350 L 280 396 L 232 396 Z" fill="#15803d" />
+    
+    <!-- Signboard "WK" -->
+    <rect x="216" y="142" width="80" height="34" rx="8" fill="#fef08a" />
+    <text x="256" y="166" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="#854d0e" text-anchor="middle">WARUNG</text>
+  </g>
+</svg>
