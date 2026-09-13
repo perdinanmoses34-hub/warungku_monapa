@@ -144,10 +144,10 @@ export const Header: React.FC<Props> = ({
                   currentUser.role === 'SUPER_ADMIN' ? 'bg-purple-50 text-purple-700 font-bold' : 'hover:bg-stone-50'
                 }`}
               >
-                <Shield className="w-4 h-4 text-purple-600" />
-                <div>
-                  <div>Super Admin</div>
-                  <div className="text-[10px] font-normal text-stone-400">Akses penuh sistem & pengaturan</div>
+                <Shield className="w-4 h-4 text-purple-600 shrink-0" />
+                <div className="truncate">
+                  <div>Super Admin (Perdinan Moses)</div>
+                  <div className="text-[10px] font-normal text-stone-400 truncate">perdinan.moses34@guru.smp.belajar.id</div>
                 </div>
               </button>
             </div>

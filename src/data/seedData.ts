@@ -569,9 +569,9 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const INITIAL_USERS: User[] = [
   {
     id: 'user-superadmin',
-    name: 'Budi Santoso (Super Admin)',
+    name: 'Perdinan Moses (Super Admin)',
     phone: '081234567890',
-    email: 'admin@warungku.id',
+    email: 'perdinan.moses34@guru.smp.belajar.id',
     role: 'SUPER_ADMIN',
     avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
     addresses: [],

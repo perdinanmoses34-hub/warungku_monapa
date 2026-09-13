@@ -78,6 +78,15 @@ class StoreService {
       this.cart = this.getItem(STORAGE_KEYS.CART, []);
       this.orders = this.getItem(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
       this.users = this.getItem(STORAGE_KEYS.USERS, INITIAL_USERS);
+      // Pastikan superadmin memakai akun perdinan.moses34@guru.smp.belajar.id
+      const superAdminIndex = this.users.findIndex((u) => u.role === 'SUPER_ADMIN' || u.id === 'user-superadmin');
+      if (superAdminIndex >= 0) {
+        this.users[superAdminIndex] = {
+          ...this.users[superAdminIndex],
+          name: 'Perdinan Moses (Super Admin)',
+          email: 'perdinan.moses34@guru.smp.belajar.id',
+        };
+      }
       this.currentUserId = this.getItem(STORAGE_KEYS.CURRENT_USER, 'user-customer');
       this.vouchers = this.getItem(STORAGE_KEYS.VOUCHERS, INITIAL_VOUCHERS);
       this.settings = this.getItem(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);

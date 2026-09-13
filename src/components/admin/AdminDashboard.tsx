@@ -87,7 +87,7 @@ export const AdminDashboard: React.FC<Props> = ({
           }`}
         >
           <FileSpreadsheet className="w-4 h-4" />
-          <span>Google Sheets Sync</span>
+          <span>Google Sheets & Drive</span>
         </button>
 
         <button
