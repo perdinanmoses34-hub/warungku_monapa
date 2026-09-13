@@ -7,13 +7,11 @@ on:
       - master
   workflow_dispatch:
 
-# Hak akses untuk GITHUB_TOKEN agar dapat mempublikasikan ke GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Hanya izinkan satu deployment berjalan dalam satu waktu
 concurrency:
   group: 'pages'
   cancel-in-progress: false
@@ -32,23 +30,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
+        run: npm install
 
       - name: Build Project
         run: npm run build
         env:
           BASE_PATH: /warungku_monapa/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3

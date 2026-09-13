@@ -1,6 +1,10 @@
 {
   "name": "WARUNGKU",
   "description": "Platform Toko & Warung Sembako Online Modern dengan Layanan Pengantaran Cepat",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
