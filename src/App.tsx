@@ -253,6 +253,7 @@ export default function App() {
             settings={settings}
             userRole={currentUser.role}
             currentUserId={currentUser.id}
+            onNavigateHome={() => setActiveScreen('home')}
           />
         )}
 

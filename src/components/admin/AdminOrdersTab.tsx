@@ -18,6 +18,8 @@ import {
   CreditCard,
   Banknote,
   AlertCircle,
+  RotateCcw,
+  Store,
 } from 'lucide-react';
 
 interface Props {
@@ -130,8 +132,19 @@ export const AdminOrdersTab: React.FC<Props> = ({ orders, settings }) => {
             <tbody className="divide-y divide-stone-100 text-xs">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-stone-400">
-                    Tidak ada pesanan yang sesuai filter.
+                  <td colSpan={7} className="p-12 text-center text-stone-500 space-y-3">
+                    <Package className="w-10 h-10 text-stone-300 mx-auto" />
+                    <p className="font-bold text-stone-700 text-sm">Tidak ada pesanan yang sesuai filter.</p>
+                    <p className="text-stone-400 text-xs max-w-sm mx-auto">
+                      Belum ada transaksi masuk pada filter status ini. Anda dapat memuat pesanan simulasi untuk menguji sistem.
+                    </p>
+                    <button
+                      onClick={() => store.seedDemoOrders()}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Muat Pesanan Contoh</span>
+                    </button>
                   </td>
                 </tr>
               ) : (
@@ -144,6 +157,12 @@ export const AdminOrdersTab: React.FC<Props> = ({ orders, settings }) => {
                         <span className="block text-[10px] font-normal text-stone-400">
                           {formatDate(order.createdAt)}
                         </span>
+                        {order.sellerStoreName && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.2 bg-teal-50 border border-teal-200 text-teal-800 rounded text-[9px] font-bold">
+                            <Store className="w-2.5 h-2.5 text-teal-600" />
+                            <span>{order.sellerStoreName}</span>
+                          </span>
+                        )}
                       </td>
 
                       <td className="p-3.5">

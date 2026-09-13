@@ -78,6 +78,26 @@ class StoreService {
       this.categories = this.getItem(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
       this.cart = this.getItem(STORAGE_KEYS.CART, []);
       this.orders = this.getItem(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+
+      // Pastikan data pesanan selalu tersedia dan tidak kosong
+      if (!Array.isArray(this.orders) || this.orders.length === 0) {
+        this.orders = [...INITIAL_ORDERS];
+        this.setItem(STORAGE_KEYS.ORDERS, this.orders);
+      } else {
+        // Gabungkan seed orders jika belum ada di storage lama
+        let updatedOrders = false;
+        INITIAL_ORDERS.forEach((seedOrder) => {
+          const exists = this.orders.some((o) => o.id === seedOrder.id);
+          if (!exists) {
+            this.orders.push(seedOrder);
+            updatedOrders = true;
+          }
+        });
+        if (updatedOrders) {
+          this.setItem(STORAGE_KEYS.ORDERS, this.orders);
+        }
+      }
+
       this.users = this.getItem(STORAGE_KEYS.USERS, INITIAL_USERS);
       // Ensure seed sellers exist even if old users in storage lacked them
       INITIAL_USERS.forEach((seedU) => {
@@ -984,6 +1004,23 @@ class StoreService {
 
   public getOrders(): Order[] {
     return [...this.orders];
+  }
+
+  /**
+   * Muat kembali seluruh pesanan demo / contoh
+   */
+  public seedDemoOrders(): void {
+    INITIAL_ORDERS.forEach((seedOrder) => {
+      const idx = this.orders.findIndex((o) => o.id === seedOrder.id);
+      if (idx >= 0) {
+        this.orders[idx] = seedOrder;
+      } else {
+        this.orders.unshift(seedOrder);
+      }
+    });
+    this.setItem(STORAGE_KEYS.ORDERS, this.orders);
+    this.logActivity('SEED_ORDERS', 'Sistem', 'Memuat kembali data pesanan demo');
+    this.notify();
   }
 
   public getOrdersBySeller(sellerId: string): Order[] {

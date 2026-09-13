@@ -18,6 +18,9 @@ import {
   AlertCircle,
   X,
   ExternalLink,
+  Store,
+  ShoppingBag,
+  RotateCcw,
 } from 'lucide-react';
 
 interface Props {
@@ -27,6 +30,7 @@ interface Props {
   currentUserId: string;
   initialSelectedOrderId?: string;
   onSelectOrder?: (orderId: string) => void;
+  onNavigateHome?: () => void;
 }
 
 export const OrdersScreen: React.FC<Props> = ({
@@ -35,6 +39,8 @@ export const OrdersScreen: React.FC<Props> = ({
   userRole,
   currentUserId,
   initialSelectedOrderId,
+  onSelectOrder,
+  onNavigateHome,
 }) => {
   const [selectedTab, setSelectedTab] = useState<string>('ALL');
   const [activeOrderId, setActiveOrderId] = useState<string | null>(initialSelectedOrderId || null);
@@ -44,12 +50,19 @@ export const OrdersScreen: React.FC<Props> = ({
 
   const activeOrder = orders.find((o) => o.id === activeOrderId);
 
+  // Status counters
+  const unpaidCount = orders.filter((o) => o.orderStatus === 'WAITING_PAYMENT').length;
+  const processingCount = orders.filter((o) => ['CREATED', 'PAYMENT_CONFIRMED', 'ACCEPTED', 'PROCESSING', 'PACKING', 'READY_FOR_PICKUP'].includes(o.orderStatus)).length;
+  const deliveringCount = orders.filter((o) => ['ON_DELIVERY', 'DELIVERING', 'ARRIVED'].includes(o.orderStatus)).length;
+  const completedCount = orders.filter((o) => o.orderStatus === 'COMPLETED').length;
+  const cancelledCount = orders.filter((o) => o.orderStatus === 'CANCELLED').length;
+
   // Filter orders by tab
   const filteredOrders = orders.filter((o) => {
     if (selectedTab === 'ALL') return true;
     if (selectedTab === 'UNPAID') return o.orderStatus === 'WAITING_PAYMENT';
-    if (selectedTab === 'PROCESSING') return ['CREATED', 'PAYMENT_CONFIRMED', 'ACCEPTED', 'PACKING', 'READY_FOR_PICKUP'].includes(o.orderStatus);
-    if (selectedTab === 'DELIVERING') return ['ON_DELIVERY', 'ARRIVED'].includes(o.orderStatus);
+    if (selectedTab === 'PROCESSING') return ['CREATED', 'PAYMENT_CONFIRMED', 'ACCEPTED', 'PROCESSING', 'PACKING', 'READY_FOR_PICKUP'].includes(o.orderStatus);
+    if (selectedTab === 'DELIVERING') return ['ON_DELIVERY', 'DELIVERING', 'ARRIVED'].includes(o.orderStatus);
     if (selectedTab === 'COMPLETED') return o.orderStatus === 'COMPLETED';
     if (selectedTab === 'CANCELLED') return o.orderStatus === 'CANCELLED';
     return true;
@@ -62,10 +75,12 @@ export const OrdersScreen: React.FC<Props> = ({
       case 'CREATED':
       case 'PAYMENT_CONFIRMED':
       case 'ACCEPTED':
-        return { label: 'Diterima Warung', bg: 'bg-blue-100 text-blue-800 border-blue-200' };
+      case 'PROCESSING':
+        return { label: 'Diproses Warung', bg: 'bg-blue-100 text-blue-800 border-blue-200' };
       case 'PACKING':
       case 'READY_FOR_PICKUP':
         return { label: 'Sedang Dikemas', bg: 'bg-indigo-100 text-indigo-800 border-indigo-200' };
+      case 'DELIVERING':
       case 'ON_DELIVERY':
       case 'ARRIVED':
         return { label: 'Sedang Diantar Kurir', bg: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
@@ -154,33 +169,76 @@ export const OrdersScreen: React.FC<Props> = ({
       {/* Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-2 no-scrollbar">
         {[
-          { key: 'ALL', label: 'Semua' },
-          { key: 'UNPAID', label: 'Menunggu Bayar' },
-          { key: 'PROCESSING', label: 'Diproses' },
-          { key: 'DELIVERING', label: 'Sedang Diantar' },
-          { key: 'COMPLETED', label: 'Selesai' },
-          { key: 'CANCELLED', label: 'Dibatalkan' },
+          { key: 'ALL', label: 'Semua', count: orders.length },
+          { key: 'UNPAID', label: 'Menunggu Bayar', count: unpaidCount },
+          { key: 'PROCESSING', label: 'Diproses', count: processingCount },
+          { key: 'DELIVERING', label: 'Sedang Diantar', count: deliveringCount },
+          { key: 'COMPLETED', label: 'Selesai', count: completedCount },
+          { key: 'CANCELLED', label: 'Dibatalkan', count: cancelledCount },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setSelectedTab(tab.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
               selectedTab === tab.key
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
             }`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                selectedTab === tab.key ? 'bg-emerald-800 text-white' : 'bg-stone-100 text-stone-600'
+              }`}
+            >
+              {tab.count}
+            </span>
           </button>
         ))}
       </div>
 
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
-        <div className="p-12 text-center text-stone-400 bg-white rounded-2xl border border-stone-200">
-          <Package className="w-12 h-12 stroke-1 text-stone-300 mx-auto mb-2" />
-          <p className="font-bold text-stone-700 text-sm">Belum Ada Pesanan di Kategori Ini</p>
-          <p className="text-xs text-stone-400 mt-1">Pesanan sembako yang Anda buat akan muncul di sini.</p>
+        <div className="p-8 sm:p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-2xs space-y-4">
+          <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto text-emerald-600">
+            <Package className="w-7 h-7 stroke-1.5" />
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <p className="font-bold text-stone-800 text-base">
+              {orders.length === 0 ? 'Belum Ada Riwayat Pesanan' : 'Tidak Ada Pesanan di Kategori Ini'}
+            </p>
+            <p className="text-xs text-stone-500">
+              {orders.length === 0
+                ? 'Pesanan sembako yang Anda beli akan tercatat di sini dengan pelacakan kurir real-time.'
+                : `Anda memiliki total ${orders.length} pesanan di kategori lainnya.`}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            {orders.length > 0 && selectedTab !== 'ALL' && (
+              <button
+                onClick={() => setSelectedTab('ALL')}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition cursor-pointer"
+              >
+                Tampilkan Semua Pesanan ({orders.length})
+              </button>
+            )}
+            {onNavigateHome && (
+              <button
+                onClick={onNavigateHome}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Mulai Belanja Sembako</span>
+              </button>
+            )}
+            <button
+              onClick={() => store.seedDemoOrders()}
+              className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Muat Pesanan Contoh</span>
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -192,40 +250,64 @@ export const OrdersScreen: React.FC<Props> = ({
               <div
                 key={order.id}
                 onClick={() => setActiveOrderId(order.id)}
-                className={`bg-white rounded-2xl p-4 border transition cursor-pointer ${
-                  activeOrderId === order.id ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500/30' : 'border-stone-200 hover:border-stone-300'
+                className={`bg-white rounded-3xl p-4 border transition cursor-pointer ${
+                  activeOrderId === order.id
+                    ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500/30'
+                    : 'border-stone-200 hover:border-stone-300 shadow-2xs'
                 }`}
               >
-                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-stone-100 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-black text-stone-900">{order.orderNumber}</span>
-                    <span className="text-stone-400">•</span>
-                    <span className="text-stone-500">{formatDate(order.createdAt)}</span>
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-100 text-xs">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono font-black text-stone-900 text-xs">{order.orderNumber}</span>
+                    <span className="text-stone-300">•</span>
+                    <span className="text-stone-500 text-[11px]">{formatDate(order.createdAt)}</span>
+                    {order.sellerStoreName && (
+                      <span className="inline-flex items-center gap-1 bg-teal-50 border border-teal-200 text-teal-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        <Store className="w-3 h-3 text-teal-600" />
+                        <span>{order.sellerStoreName}</span>
+                      </span>
+                    )}
                   </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badge.bg}`}>
-                    {badge.label}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badge.bg}`}>
+                      {badge.label}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Items preview snippet */}
-                <div className="py-2.5 flex items-center justify-between gap-3">
+                <div className="py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {order.items[0]?.imageUrl && (
                       <img
                         src={order.items[0].imageUrl}
                         alt="thumb"
-                        className="w-12 h-12 rounded-xl object-cover bg-stone-100 shrink-0"
+                        className="w-13 h-13 rounded-2xl object-cover bg-stone-100 shrink-0 border border-stone-100 shadow-2xs"
                       />
                     )}
                     <div className="min-w-0">
-                      <p className="font-bold text-xs sm:text-sm text-stone-800 truncate">
+                      <p className="font-bold text-xs sm:text-sm text-stone-900 truncate">
                         {order.items[0]?.name || 'Pesanan Sembako'}
                       </p>
-                      <p className="text-[11px] text-stone-400">
+                      <p className="text-[11px] text-stone-500">
                         {order.items.length > 1
-                          ? `+ ${order.items.length - 1} barang sembako lainnya (${totalQty} pcs)`
+                          ? `+ ${order.items.length - 1} barang sembako lainnya (${totalQty} item)`
                           : `${order.items[0]?.quantity} ${order.items[0]?.unit}`}
                       </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-stone-600 font-semibold">
+                          Bayar: {order.paymentMethod === 'COD' ? 'COD (Bayar di Tempat)' : order.paymentMethod === 'BANK_TRANSFER' ? 'Transfer Bank' : 'E-Wallet/QRIS'}
+                        </span>
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                            order.paymentStatus === 'PAID'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {order.paymentStatus === 'PAID' ? 'Lunas' : 'Belum Bayar'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -237,13 +319,13 @@ export const OrdersScreen: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs text-emerald-700 font-semibold">
-                  <span className="flex items-center gap-1">
-                    {order.deliveryMethod === 'DELIVERY' ? <Truck className="w-3.5 h-3.5" /> : <Package className="w-3.5 h-3.5" />}
-                    <span>{order.deliveryMethod === 'DELIVERY' ? 'Pengantaran Kurir' : 'Ambil di Warung'}</span>
+                <div className="pt-2.5 border-t border-stone-100 flex items-center justify-between text-xs text-emerald-700 font-semibold">
+                  <span className="flex items-center gap-1.5 text-[11px] text-stone-600">
+                    {order.deliveryMethod === 'DELIVERY' ? <Truck className="w-3.5 h-3.5 text-emerald-600" /> : <Package className="w-3.5 h-3.5 text-amber-600" />}
+                    <span>{order.deliveryMethod === 'DELIVERY' ? 'Pengantaran Kurir ke Alamat' : 'Ambil Mandiri di Warung'}</span>
                   </span>
-                  <span className="flex items-center gap-0.5">
-                    Lacak & Detail <ChevronRight className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-0.5 text-xs text-emerald-700 font-bold hover:underline">
+                    Lacak & Rincian <ChevronRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </div>
@@ -458,11 +540,48 @@ export const OrdersScreen: React.FC<Props> = ({
             </div>
 
             {/* Modal Action Footer */}
-            <div className="p-4 border-t border-stone-200 bg-white flex items-center justify-between gap-3 shrink-0">
+            <div className="p-4 border-t border-stone-200 bg-white flex flex-col gap-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintInvoice}
+                  className="flex-1 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Cetak Struk</span>
+                </button>
+
+                {activeOrder.orderStatus !== 'COMPLETED' && activeOrder.orderStatus !== 'CANCELLED' && (
+                  <button
+                    onClick={() => {
+                      const nextMap: Record<string, OrderStatus> = {
+                        WAITING_PAYMENT: 'PAYMENT_CONFIRMED',
+                        CREATED: 'ACCEPTED',
+                        PAYMENT_CONFIRMED: 'ACCEPTED',
+                        ACCEPTED: 'PACKING',
+                        PROCESSING: 'PACKING',
+                        PACKING: 'ON_DELIVERY',
+                        READY_FOR_PICKUP: 'ON_DELIVERY',
+                        ON_DELIVERY: 'ARRIVED',
+                        DELIVERING: 'ARRIVED',
+                        ARRIVED: 'COMPLETED',
+                      };
+                      const next = nextMap[activeOrder.orderStatus];
+                      if (next) {
+                        store.updateOrderStatus(activeOrder.id, next, `Simulasi status: ${next}`);
+                      }
+                    }}
+                    className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Simulasi Langkah Maju</span>
+                  </button>
+                )}
+              </div>
+
               {activeOrder.orderStatus === 'COMPLETED' ? (
                 <button
                   onClick={() => setShowReviewModal(activeOrder.id)}
-                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer text-xs"
                 >
                   <Star className="w-4 h-4 fill-stone-950" />
                   <span>Beri Ulasan Produk</span>
@@ -474,7 +593,7 @@ export const OrdersScreen: React.FC<Props> = ({
                       store.updateOrderStatus(activeOrder.id, 'CANCELLED');
                     }
                   }}
-                  className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl transition cursor-pointer"
+                  className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl transition cursor-pointer text-xs"
                 >
                   Batalkan Pesanan
                 </button>
@@ -483,10 +602,10 @@ export const OrdersScreen: React.FC<Props> = ({
                   href={`https://wa.me/${settings.storePhone}?text=Halo%20Admin%20Warungku%20mohon%20info%20pesanan%20${activeOrder.orderNumber}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer text-xs"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Hubungi Admin Warung</span>
+                  <span>Hubungi Admin Warung via WA</span>
                 </a>
               )}
             </div>
