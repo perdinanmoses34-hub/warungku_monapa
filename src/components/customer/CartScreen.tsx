@@ -60,7 +60,7 @@ export const CartScreen: React.FC<Props> = ({
 
   if (itemsWithProduct.length === 0) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
+      <div className="w-full max-w-md mx-auto px-4 py-16 text-center space-y-4">
         <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto text-emerald-600">
           <ShoppingBag className="w-10 h-10" />
         </div>
@@ -79,7 +79,7 @@ export const CartScreen: React.FC<Props> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-4 pb-28 space-y-4">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-4 pb-28 space-y-4 overflow-x-hidden">
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>

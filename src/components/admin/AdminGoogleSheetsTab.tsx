@@ -161,15 +161,15 @@ export const AdminGoogleSheetsTab: React.FC<Props> = ({
   };
 
   return (
-    <div className="space-y-4 text-xs text-stone-900">
+    <div className="space-y-4 text-xs text-stone-900 w-full max-w-full overflow-x-hidden">
       {/* Account Header Badge */}
-      <div className="bg-emerald-900 text-white p-5 rounded-3xl shadow-md">
+      <div className="bg-emerald-900 text-white p-4 sm:p-5 rounded-3xl shadow-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-800 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-800 flex items-center justify-center shrink-0">
               <Database className="w-6 h-6 text-emerald-300" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">
                   Akun Cloud Terdaftar
@@ -178,11 +178,11 @@ export const AdminGoogleSheetsTab: React.FC<Props> = ({
                   Super Admin
                 </span>
               </div>
-              <h2 className="text-base sm:text-lg font-black tracking-tight mt-0.5 flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-300" />
+              <h2 className="text-sm sm:text-base font-black tracking-tight mt-0.5 flex items-center gap-1.5 break-all">
+                <Mail className="w-4 h-4 text-emerald-300 shrink-0" />
                 <span>{targetEmail}</span>
               </h2>
-              <p className="text-xs text-emerald-100/90 mt-1">
+              <p className="text-xs text-emerald-100/90 mt-1 leading-normal">
                 Aplikasi disinkronkan langsung dengan Google Sheets, Google Drive, dan Firebase untuk katalog barang dan transaksi warung.
               </p>
             </div>
@@ -437,8 +437,8 @@ export const AdminGoogleSheetsTab: React.FC<Props> = ({
           </div>
 
           {showScriptCode && (
-            <div className="mt-3 p-3 bg-stone-900 text-stone-200 rounded-2xl overflow-x-auto font-mono text-[11px] leading-relaxed max-h-64 border border-stone-800">
-              <pre>{GoogleSheetsService.getAppsScriptTemplate()}</pre>
+            <div className="mt-3 p-3 bg-stone-900 text-stone-200 rounded-2xl overflow-x-auto font-mono text-[11px] leading-relaxed max-h-64 border border-stone-800 w-full max-w-full">
+              <pre className="whitespace-pre overflow-x-auto">{GoogleSheetsService.getAppsScriptTemplate()}</pre>
             </div>
           )}
         </div>

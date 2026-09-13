@@ -27,6 +27,7 @@ interface Props {
   wishlistProducts: Product[];
   onOpenProductDetail: (product: Product) => void;
   onNavigateOrders: () => void;
+  onOpenAuth?: () => void;
 }
 
 export const ProfileScreen: React.FC<Props> = ({
@@ -35,6 +36,7 @@ export const ProfileScreen: React.FC<Props> = ({
   wishlistProducts,
   onOpenProductDetail,
   onNavigateOrders,
+  onOpenAuth,
 }) => {
   const { isInstallable, install } = usePWAInstall();
   const [activeTab, setActiveTab] = useState<'ADDRESS' | 'WISHLIST' | 'INFO'>('ADDRESS');
@@ -92,8 +94,18 @@ export const ProfileScreen: React.FC<Props> = ({
             </span>
           </div>
           <p className="text-xs text-emerald-100 mt-0.5">{user.phone}</p>
-          <p className="text-[11px] text-emerald-200 truncate">{user.email}</p>
+          <p className="text-[11px] text-emerald-200 truncate">{user.email || 'Akun Pengguna WARUNGKU'}</p>
         </div>
+
+        {onOpenAuth && (
+          <button
+            onClick={onOpenAuth}
+            className="px-3 py-1.5 bg-white text-emerald-800 hover:bg-emerald-50 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <UserIcon className="w-3.5 h-3.5" />
+            <span>Ganti / Daftar</span>
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

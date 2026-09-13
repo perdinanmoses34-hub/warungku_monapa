@@ -39,9 +39,9 @@ export const AdminDashboard: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3.5 sm:px-6 py-4 pb-28 space-y-4">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 pb-28 space-y-4 overflow-x-hidden">
       {/* Subnav for admin */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-stone-200 no-scrollbar">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-stone-200 no-scrollbar max-w-full">
         <button
           onClick={() => setActiveTab('OVERVIEW')}
           className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${

@@ -115,55 +115,54 @@ export const ProductCard: React.FC<Props> = ({
 
         {/* Price & Action Button */}
         <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
-          <div>
-            <div className="text-xs sm:text-sm font-extrabold text-stone-900">
+          <div className="min-w-0">
+            <div className="text-xs sm:text-sm font-black text-stone-900 leading-tight truncate">
               {formatRupiah(product.promoPrice || product.normalPrice)}
             </div>
-            {product.promoPrice && (
-              <div className="text-[10px] text-stone-400 line-through">
-                {formatRupiah(product.normalPrice)}
-              </div>
-            )}
-            <div className="text-[10px] text-stone-400">/{product.unit}</div>
+            <div className="flex items-center gap-1 mt-0.5">
+              {product.promoPrice && (
+                <span className="text-[10px] text-stone-400 line-through">
+                  {formatRupiah(product.normalPrice)}
+                </span>
+              )}
+              <span className="text-[10px] font-medium text-stone-500">/{product.unit}</span>
+            </div>
           </div>
 
           {/* Cart Control: If 0 -> + Keranjang. If > 0 -> Quantity Stepper */}
           {isOutOfStock ? (
-            <button
-              disabled
-              className="px-2.5 py-1.5 bg-stone-200 text-stone-400 text-xs font-semibold rounded-xl cursor-not-allowed"
-            >
+            <span className="px-2 py-1 bg-stone-100 text-stone-400 text-[11px] font-semibold rounded-xl shrink-0">
               Habis
-            </button>
+            </span>
           ) : cartQuantity > 0 ? (
-            <div className="flex items-center bg-emerald-50 border border-emerald-200 rounded-xl p-0.5">
+            <div className="flex items-center bg-emerald-50 border border-emerald-200 rounded-xl p-0.5 shrink-0">
               <button
                 onClick={() => onUpdateCartQty(product.id, cartQuantity - 1)}
-                className="w-7 h-7 flex items-center justify-center text-emerald-700 hover:bg-emerald-200/60 rounded-lg transition active:scale-95 cursor-pointer"
+                className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-emerald-700 hover:bg-emerald-200/60 rounded-lg transition active:scale-95 cursor-pointer"
                 aria-label="Kurang"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>
-              <span className="w-6 text-center text-xs font-bold text-emerald-900">
+              <span className="w-5 sm:w-6 text-center text-xs font-bold text-emerald-900">
                 {cartQuantity}
               </span>
               <button
                 onClick={() => onUpdateCartQty(product.id, cartQuantity + 1)}
                 disabled={cartQuantity >= product.stock}
-                className="w-7 h-7 flex items-center justify-center text-emerald-700 hover:bg-emerald-200/60 rounded-lg transition active:scale-95 cursor-pointer disabled:opacity-40"
+                className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-emerald-700 hover:bg-emerald-200/60 rounded-lg transition active:scale-95 cursor-pointer disabled:opacity-40"
                 aria-label="Tambah"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>
             </div>
           ) : (
             <button
               onClick={() => onAddToCart(product.id)}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+              className="flex items-center justify-center gap-1 px-2 sm:px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer shrink-0"
               title="Tambah ke Keranjang"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Keranjang</span>
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Beli</span>
             </button>
           )}
         </div>

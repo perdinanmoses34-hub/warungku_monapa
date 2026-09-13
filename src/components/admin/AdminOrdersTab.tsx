@@ -77,7 +77,7 @@ export const AdminOrdersTab: React.FC<Props> = ({ orders, settings }) => {
   };
 
   return (
-    <div className="space-y-4 text-xs text-stone-900">
+    <div className="space-y-4 text-xs text-stone-900 w-full max-w-full overflow-x-hidden">
       {/* Top Controls: Search & Filter */}
       <div className="bg-white p-4 rounded-3xl border border-stone-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
@@ -113,9 +113,9 @@ export const AdminOrdersTab: React.FC<Props> = ({ orders, settings }) => {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left divide-y divide-stone-200">
+      <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto w-full max-w-full">
+          <table className="w-full min-w-[650px] text-left divide-y divide-stone-200">
             <thead className="bg-stone-50 text-[10px] font-bold uppercase tracking-wider text-stone-500">
               <tr>
                 <th className="p-3.5">No. Pesanan</th>

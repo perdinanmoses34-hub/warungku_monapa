@@ -25,6 +25,7 @@ import { ProductDetailModal } from './components/customer/ProductDetailModal';
 import { SearchModal } from './components/customer/SearchModal';
 import { CourierScreen } from './components/courier/CourierScreen';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AuthModal } from './components/common/AuthModal';
 import { Tag, X, Check } from 'lucide-react';
 import { formatRupiah } from './utils/formatters';
 
@@ -46,6 +47,7 @@ export default function App() {
   const [selectedProductDetail, setSelectedProductDetail] = useState<Product | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -150,7 +152,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 font-sans text-stone-900 flex flex-col selection:bg-emerald-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-stone-50 font-sans text-stone-900 flex flex-col selection:bg-emerald-200">
       {/* Offline Alert Indicator */}
       <OfflineBanner />
 
@@ -165,6 +167,7 @@ export default function App() {
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenCart={() => setActiveScreen('cart')}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
       {/* Toast Alert */}
@@ -176,7 +179,7 @@ export default function App() {
       )}
 
       {/* Main Screen Router */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {activeScreen === 'home' && (
           <HomeScreen
             products={products}
@@ -253,6 +256,7 @@ export default function App() {
             wishlistProducts={wishlistProducts}
             onOpenProductDetail={(prod) => setSelectedProductDetail(prod)}
             onNavigateOrders={() => setActiveScreen('orders')}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         )}
 
@@ -380,6 +384,16 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Shopee-style Customer Authentication & Role Switching Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(loggedUser) => {
+          setCurrentUser(loggedUser);
+          showToast(`Berhasil login sebagai ${loggedUser.name}`);
+        }}
+      />
     </div>
   );
 }

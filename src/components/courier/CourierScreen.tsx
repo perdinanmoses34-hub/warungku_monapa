@@ -107,7 +107,7 @@ export const CourierScreen: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-4 pb-28 space-y-4 text-stone-900">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-4 pb-28 space-y-4 text-stone-900 overflow-x-hidden">
       {/* Courier Profile & Status Toggle */}
       <div className="bg-stone-900 text-white p-4 sm:p-5 rounded-3xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">

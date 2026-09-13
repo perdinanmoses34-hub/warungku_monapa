@@ -64,13 +64,20 @@ export const AdminOverviewTab: React.FC<Props> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => onNavigateTab('SHEETS')}
+            className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer border border-emerald-500/50"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+            <span>Google Sheets & Drive</span>
+          </button>
           <button
             onClick={onExportOrdersCSV}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer border border-stone-700"
           >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Ekspor CSV Pesanan</span>
+            <ArrowUpRight className="w-4 h-4" />
+            <span>Unduh CSV Pesanan</span>
           </button>
         </div>
       </div>

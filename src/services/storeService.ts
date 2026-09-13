@@ -194,7 +194,83 @@ class StoreService {
 
   public getCurrentUser(): User {
     const user = this.users.find((u) => u.id === this.currentUserId);
-    return user || this.users[3]; // default customer
+    return user || this.users[3] || this.users[0]; // fallback
+  }
+
+  public registerUser(params: { name: string; phone: string; email: string; role?: UserRole }): { success: boolean; user?: User; message: string } {
+    const cleanPhone = params.phone.trim();
+    const cleanEmail = params.email.trim().toLowerCase();
+
+    // Check if phone or email already registered
+    const existing = this.users.find(
+      (u) => (cleanEmail && u.email.toLowerCase() === cleanEmail) || (cleanPhone && u.phone === cleanPhone)
+    );
+
+    if (existing) {
+      // Auto login to existing account
+      this.currentUserId = existing.id;
+      this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+      this.notify();
+      return { success: true, user: existing, message: 'Akun Anda ditemukan! Berhasil masuk.' };
+    }
+
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      name: params.name.trim(),
+      phone: cleanPhone,
+      email: cleanEmail,
+      role: params.role || 'CUSTOMER',
+      avatarUrl: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`,
+      addresses: [],
+      createdAt: new Date().toISOString(),
+      totalSpent: 0,
+      totalOrders: 0,
+    };
+
+    this.users.unshift(newUser);
+    this.setItem(STORAGE_KEYS.USERS, this.users);
+
+    this.currentUserId = newUser.id;
+    this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+
+    this.addNotification({
+      userId: newUser.id,
+      title: 'Selamat Datang di WARUNGKU! 🎉',
+      message: `Hai ${newUser.name}, akun belanja Anda telah aktif. Selamat berbelanja kebutuhan sembako segar!`,
+      type: 'SYSTEM',
+      read: false,
+    });
+
+    this.logActivity('REGISTER_USER', 'Pengguna', `Pengguna baru mendaftar: ${newUser.name} (${newUser.email || newUser.phone})`);
+    this.notify();
+
+    return { success: true, user: newUser, message: 'Akun berhasil dibuat! Selamat berbelanja.' };
+  }
+
+  public loginUser(credential: string): { success: boolean; user?: User; message: string } {
+    const clean = credential.trim().toLowerCase();
+    const found = this.users.find(
+      (u) => u.email.toLowerCase() === clean || u.phone.replace(/[^0-9]/g, '') === clean.replace(/[^0-9]/g, '')
+    );
+
+    if (!found) {
+      return { success: false, message: 'Akun dengan email/nomor HP tersebut belum terdaftar. Silakan buat akun baru.' };
+    }
+
+    this.currentUserId = found.id;
+    this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+    this.notify();
+    return { success: true, user: found, message: `Selamat datang kembali, ${found.name}!` };
+  }
+
+  public logoutUser(): void {
+    // Switch to public default guest / customer
+    const publicCustomer = this.users.find((u) => u.role === 'CUSTOMER') || this.users[0];
+    if (publicCustomer) {
+      this.currentUserId = publicCustomer.id;
+      this.setItem(STORAGE_KEYS.CURRENT_USER, this.currentUserId);
+      this.notify();
+    }
   }
 
   public switchUser(userId: string): void {

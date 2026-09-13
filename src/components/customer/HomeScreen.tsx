@@ -66,20 +66,20 @@ export const HomeScreen: React.FC<Props> = ({
   });
 
   return (
-    <div className="space-y-6 pb-24 max-w-7xl mx-auto px-3.5 sm:px-6 pt-3">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 space-y-5 sm:space-y-6 pb-24 overflow-x-hidden">
       {/* Search Bar Tap Trigger (Mobile & Android visual) */}
       <div
         onClick={onOpenSearch}
-        className="w-full bg-white rounded-2xl p-3 border border-stone-200/90 shadow-xs flex items-center gap-3 cursor-pointer hover:border-emerald-500 transition group"
+        className="w-full bg-white rounded-2xl p-3 border border-stone-200/90 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-emerald-500 transition group"
       >
-        <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
           <Search className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-stone-800">Mau belanja sembako apa hari ini?</p>
+          <p className="text-xs sm:text-sm font-bold text-stone-800 leading-snug">Mau belanja sembako apa hari ini?</p>
           <p className="text-[11px] text-stone-400 truncate">Cari beras, minyak goreng, telur, gula, bumbu dapur...</p>
         </div>
-        <span className="px-2.5 py-1 bg-emerald-600 text-white text-[11px] font-bold rounded-lg shadow-2xs">
+        <span className="px-3 py-1 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-2xs shrink-0">
           Cari
         </span>
       </div>
@@ -89,25 +89,25 @@ export const HomeScreen: React.FC<Props> = ({
         {/* Banner 1: Gratis Ongkir */}
         <div
           onClick={onOpenVoucherModal}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white p-4 sm:p-5 shadow-sm cursor-pointer hover:shadow-md transition"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white p-4 sm:p-5 shadow-xs cursor-pointer hover:shadow-md transition"
         >
-          <div className="relative z-10 max-w-[70%]">
-            <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-2">
+          <div className="relative z-10 max-w-[80%] sm:max-w-[75%]">
+            <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-2 uppercase tracking-wide">
               <Truck className="w-3 h-3" /> BEBAS ONGKIR
             </span>
-            <h2 className="text-base sm:text-lg font-black leading-tight tracking-tight">
+            <h2 className="text-base sm:text-lg font-black leading-snug tracking-tight">
               Belanja Min. Rp {settings.deliverySettings.freeShippingMinOrder.toLocaleString('id-ID')}
             </h2>
-            <p className="text-xs text-emerald-100 mt-1">
+            <p className="text-xs text-emerald-100 mt-1 leading-normal">
               Barang sembako kami antar langsung ke dapur rumah Anda.
             </p>
-            <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold bg-amber-400 text-stone-950 px-3 py-1 rounded-xl shadow-xs">
+            <div className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold bg-amber-400 hover:bg-amber-300 text-stone-950 px-3 py-1.5 rounded-xl shadow-xs transition">
               <span>Pakai Voucher</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="absolute -right-4 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
-          <div className="absolute right-3 bottom-2 text-6xl opacity-40 select-none">
+          <div className="absolute right-3 bottom-2 text-5xl sm:text-6xl opacity-30 select-none pointer-events-none">
             🍚
           </div>
         </div>
@@ -115,24 +115,24 @@ export const HomeScreen: React.FC<Props> = ({
         {/* Banner 2: Hemat Diskon */}
         <div
           onClick={onOpenVoucherModal}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 text-white p-4 sm:p-5 shadow-sm cursor-pointer hover:shadow-md transition"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 text-white p-4 sm:p-5 shadow-xs cursor-pointer hover:shadow-md transition"
         >
-          <div className="relative z-10 max-w-[70%]">
-            <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-2">
+          <div className="relative z-10 max-w-[80%] sm:max-w-[75%]">
+            <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-2 uppercase tracking-wide">
               <Percent className="w-3 h-3" /> VOUCHER HEMAT
             </span>
-            <h2 className="text-base sm:text-lg font-black leading-tight tracking-tight">
+            <h2 className="text-base sm:text-lg font-black leading-snug tracking-tight">
               KODE: WARUNGHEMAT
             </h2>
-            <p className="text-xs text-amber-100 mt-1">
+            <p className="text-xs text-amber-100 mt-1 leading-normal">
               Potongan 10% untuk semua kebutuhan dapur sehari-hari.
             </p>
-            <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold bg-white text-orange-700 px-3 py-1 rounded-xl shadow-xs">
+            <div className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold bg-white hover:bg-amber-50 text-orange-700 px-3 py-1.5 rounded-xl shadow-xs transition">
               <span>Klaim Diskon</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="absolute right-3 bottom-2 text-6xl opacity-40 select-none">
+          <div className="absolute right-3 bottom-2 text-5xl sm:text-6xl opacity-30 select-none pointer-events-none">
             🍳
           </div>
         </div>
@@ -141,24 +141,24 @@ export const HomeScreen: React.FC<Props> = ({
       {/* Service Highlights */}
       <div className="grid grid-cols-3 gap-2 bg-white p-3 rounded-2xl border border-stone-200/80 shadow-2xs text-center">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-          <Truck className="w-4 h-4 text-emerald-600" />
-          <div className="text-left">
-            <p className="text-[11px] font-bold text-stone-800 leading-tight">Antar Cepat</p>
+          <Truck className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="text-center sm:text-left min-w-0">
+            <p className="text-[11px] sm:text-xs font-bold text-stone-800 leading-tight">Antar Cepat</p>
             <p className="text-[10px] text-stone-400 hidden sm:block">30 - 45 Menit Sampai</p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 border-x border-stone-100">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <div className="text-left">
-            <p className="text-[11px] font-bold text-stone-800 leading-tight">Jaminan Kualitas</p>
-            <p className="text-[10px] text-stone-400 hidden sm:block">Sembako Segar & Bersih</p>
+          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="text-center sm:text-left min-w-0">
+            <p className="text-[11px] sm:text-xs font-bold text-stone-800 leading-tight">Jaminan Segar</p>
+            <p className="text-[10px] text-stone-400 hidden sm:block">Sembako Bersih</p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <div className="text-left">
-            <p className="text-[11px] font-bold text-stone-800 leading-tight">Harga Ramah</p>
-            <p className="text-[10px] text-stone-400 hidden sm:block">Ekonomis & Pas di Kantong</p>
+          <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+          <div className="text-center sm:text-left min-w-0">
+            <p className="text-[11px] sm:text-xs font-bold text-stone-800 leading-tight">Harga Ramah</p>
+            <p className="text-[10px] text-stone-400 hidden sm:block">Pas di Kantong</p>
           </div>
         </div>
       </div>
